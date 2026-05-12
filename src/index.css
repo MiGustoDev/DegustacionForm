@@ -14,19 +14,14 @@
     color: #e7e5e4;
   }
 
-  /* Custom scrollbar */
+  /* Hide scrollbar for all browsers */
+  html, body {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+  }
+
   ::-webkit-scrollbar {
-    width: 6px;
-  }
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  ::-webkit-scrollbar-thumb {
-    background: #44403c;
-    border-radius: 3px;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: #57534e;
+    display: none; /* Chrome, Safari and Opera */
   }
 
   /* Select option styling for disabled items */

@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef, type FormEvent, type ChangeEvent } from 'react';
 import { supabase } from '../lib/supabase';
-import { Send, CheckCircle, AlertCircle, Loader2, Wine } from 'lucide-react';
+import { Send, CheckCircle, AlertCircle, Loader2, UserPlus } from 'lucide-react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const HORARIOS = [
+const HORARIOS_DEFAULT = [
   'Miércoles 13/05 | 16:00 a 18:00 hs.',
   'Miércoles 13/05 | 19:00 a 21:00 hs.',
   'Jueves 14/05 | 16:00 a 18:00 hs.',
@@ -43,9 +43,12 @@ interface FormErrors {
   sucursal?: string;
 }
 
-type SubmitState = 'idle' | 'submitting' | 'success' | 'error';
+interface DegustacionFormProps {
+  horarios?: string[];
+  formId?: string;
+}
 
-export default function DegustacionForm() {
+export default function DegustacionForm({ horarios = HORARIOS_DEFAULT, formId = 'default' }: DegustacionFormProps) {
   const [formData, setFormData] = useState<FormData>({
     email: '',
     nombre_apellido: '',
@@ -66,7 +69,12 @@ export default function DegustacionForm() {
 
   useEffect(() => {
     fetchCupos();
-  }, []);
+    // Check if form was already completed
+    const isCompleted = localStorage.getItem(`degustacion_completed_${formId}`);
+    if (isCompleted) {
+      setSubmitState('success');
+    }
+  }, [formId]);
 
   useEffect(() => {
     if (submitState === 'success') {
@@ -181,7 +189,7 @@ export default function DegustacionForm() {
 
     if (!error && data) {
       const counts: Record<string, number> = {};
-      HORARIOS.forEach(h => { counts[h] = 0; });
+      horarios.forEach(h => { counts[h] = 0; });
       data.forEach(row => {
         if (counts[row.horario] !== undefined) {
           counts[row.horario]++;
@@ -291,6 +299,8 @@ export default function DegustacionForm() {
     if (error) {
       setSubmitState('error');
     } else {
+      // Save completion state in localStorage
+      localStorage.setItem(`degustacion_completed_${formId}`, 'true');
       setSubmitState('success');
       setFormData({
         email: '',
@@ -303,7 +313,7 @@ export default function DegustacionForm() {
     }
   }
 
-  const allHorariosLlenos = HORARIOS.every(h => isHorarioLleno(h));
+  const allHorariosLlenos = horarios.every(h => isHorarioLleno(h));
 
   return (
     <div className="w-full max-w-lg">
@@ -322,21 +332,15 @@ export default function DegustacionForm() {
                 ¡Todo fue confirmado con <span className="text-emerald-400 font-normal">éxito</span>!
               </h3>
               <p className="text-stone-400 text-xs sm:text-sm max-w-xs leading-relaxed">
-                Recibirás una notificación a la brevedad con todos los detalles de la experiencia.
+                Te estaremos contactando por <span className="text-emerald-400/90 font-medium">WhatsApp</span> a la brevedad para enviarte la ubicación del lugar y todos los detalles.
               </p>
-              <button
-                onClick={() => setSubmitState('idle')}
-                className="mt-10 py-3 px-6 text-stone-500 hover:text-stone-300 text-[10px] sm:text-xs font-medium transition-colors duration-200 uppercase tracking-widest border border-stone-800 rounded-full hover:border-stone-700 active:bg-stone-800/50"
-              >
-                Volver al formulario
-              </button>
             </div>
           ) : (
             <>
               {/* Card icon */}
               <div className="flex items-center gap-3 mb-8">
                 <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
-                  <Wine className="w-5 h-5 text-amber-400" />
+                  <UserPlus className="w-5 h-5 text-amber-400" />
                 </div>
                 <div>
                   <h2 className="text-stone-100 text-lg font-medium">Registrate acá</h2>
@@ -449,7 +453,7 @@ export default function DegustacionForm() {
                     <option value="" className="bg-stone-800 text-stone-400">
                       {loadingCupos ? 'Cargando horarios...' : 'Seleccioná un horario'}
                     </option>
-                    {HORARIOS.map(horario => {
+                    {horarios.map(horario => {
                       const lleno = isHorarioLleno(horario);
                       return (
                         <option
